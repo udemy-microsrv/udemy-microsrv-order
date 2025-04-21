@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
+import { OrdersModule } from './orders/orders.module';
 import configuration from './config/configuration';
 import validationSchema from './config/env.validation';
 
@@ -10,6 +11,7 @@ import validationSchema from './config/env.validation';
       load: [configuration],
       validationSchema,
     }),
+    OrdersModule,
   ],
   controllers: [],
   providers: [],
