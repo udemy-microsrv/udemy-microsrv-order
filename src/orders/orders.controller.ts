@@ -25,10 +25,7 @@ export class OrdersController {
   }
 
   @MessagePattern('order.change_status')
-  update(@Payload() changeOrderStatusDto: ChangeOrderStatusDto) {
-    return this.ordersService.changeStatus(
-      changeOrderStatusDto.id,
-      changeOrderStatusDto,
-    );
+  changeStatus(@Payload() changeOrderStatusDto: ChangeOrderStatusDto) {
+    return this.ordersService.changeStatus(changeOrderStatusDto);
   }
 }

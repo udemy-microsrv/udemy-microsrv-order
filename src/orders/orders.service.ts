@@ -48,7 +48,17 @@ export class OrdersService {
     return order;
   }
 
-  changeStatus(id: string, changeOrderStatusDto: ChangeOrderStatusDto) {
-    return `This action updates a #${id} order`;
+  async changeStatus(changeOrderStatusDto: ChangeOrderStatusDto) {
+    const { id, status } = changeOrderStatusDto;
+    const order = await this.findOne(id);
+
+    if (order?.status === status) {
+      return order;
+    }
+
+    return this.prismaService.order.update({
+      where: { id },
+      data: { status },
+    });
   }
 }
