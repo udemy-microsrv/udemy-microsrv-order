@@ -3,6 +3,7 @@ import { MessagePattern, Payload } from '@nestjs/microservices';
 import { OrdersService } from './orders.service';
 import { CreateOrderDto } from './dto/create-order.dto';
 import { ChangeOrderStatusDto } from './dto/change-order-status.dto';
+import { PaginationAndFilterDto } from './dto/pagination-and-filter.dto';
 
 @Controller()
 export class OrdersController {
@@ -14,8 +15,8 @@ export class OrdersController {
   }
 
   @MessagePattern('order.find_all')
-  findAll() {
-    return this.ordersService.findAll();
+  findAll(@Payload() paginationAndFilterDto: PaginationAndFilterDto) {
+    return this.ordersService.findAll(paginationAndFilterDto);
   }
 
   @MessagePattern('order.find_one')

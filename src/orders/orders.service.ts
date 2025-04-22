@@ -3,6 +3,7 @@ import { CreateOrderDto } from './dto/create-order.dto';
 import { ChangeOrderStatusDto } from './dto/change-order-status.dto';
 import { PrismaService } from '../prisma.service';
 import { throwRpcException } from '../common/exceptions/throw-rpc-exception';
+import { PaginationAndFilterDto } from './dto/pagination-and-filter.dto';
 
 @Injectable()
 export class OrdersService {
@@ -14,8 +15,25 @@ export class OrdersService {
     });
   }
 
-  findAll() {
-    return `This action returns all orders`;
+  async findAll(paginationAndFilterDto: PaginationAndFilterDto) {
+    const { page, limit, status } = paginationAndFilterDto;
+
+    const total = await this.prismaService.order.count({ where: { status } });
+    const lastPage = Math.ceil(total / limit);
+
+    return {
+      data: await this.prismaService.order.findMany({
+        skip: (page - 1) * limit,
+        take: limit,
+        where: { status },
+      }),
+      meta: {
+        page,
+        limit,
+        total,
+        lastPage,
+      },
+    };
   }
 
   async findOne(id: string) {
