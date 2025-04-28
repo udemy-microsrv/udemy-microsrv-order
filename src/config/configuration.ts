@@ -5,4 +5,10 @@ export default () => ({
   database: {
     url: process.env.DATABASE_URL,
   },
+  microsrv: {
+    product: {
+      host: process.env.MICROSRV_PRODUCT_HOST,
+      port: process.env.MICROSRV_PRODUCT_PORT,
+    },
+  },
 });
