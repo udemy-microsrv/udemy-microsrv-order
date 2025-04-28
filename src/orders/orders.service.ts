@@ -3,7 +3,7 @@ import { ClientProxy, RpcException } from '@nestjs/microservices';
 import { CreateOrderDto } from './dto/create-order.dto';
 import { ChangeOrderStatusDto } from './dto/change-order-status.dto';
 import { PrismaService } from '../prisma.service';
-import { throwRpcException } from '../common/exceptions/throw-rpc-exception';
+import { createRpcException } from '../common/exceptions/create-rpc-exception';
 import { PaginationAndFilterDto } from './dto/pagination-and-filter.dto';
 import { MICROSRV_PRODUCT } from '../config/microservices.token';
 import { firstValueFrom, map } from 'rxjs';
@@ -19,23 +19,8 @@ export class OrdersService {
 
   async create(createOrderDto: CreateOrderDto) {
     try {
-      const products = await firstValueFrom(
-        this.productClient
-          .send(
-            { cmd: 'product.find_many' },
-            {
-              ids: createOrderDto.items.map((item) => item.productId),
-            },
-          )
-          .pipe(
-            map(
-              (products: Product[]): ProductDict =>
-                products.reduce((acc, product) => {
-                  acc[product.id] = product;
-                  return acc;
-                }, {}),
-            ),
-          ),
+      const products = await this.findManyProducts(
+        createOrderDto.items.map((item) => item.productId),
       );
 
       const totalItems = createOrderDto.items.reduce(
@@ -120,32 +105,17 @@ export class OrdersService {
     });
 
     if (!order) {
-      throwRpcException(HttpStatus.NOT_FOUND, 'Order not found.');
+      throw createRpcException(HttpStatus.NOT_FOUND, 'Order not found.');
     }
 
     try {
-      const products = await firstValueFrom(
-        this.productClient
-          .send(
-            { cmd: 'product.find_many' },
-            {
-              ids: order?.OrderItem.map((item) => item.productId),
-            },
-          )
-          .pipe(
-            map(
-              (products: Product[]): ProductDict =>
-                products.reduce((acc, product) => {
-                  acc[product.id] = product;
-                  return acc;
-                }, {}),
-            ),
-          ),
+      const products = await this.findManyProducts(
+        order.OrderItem.map((item) => item.productId),
       );
 
       return {
         ...order,
-        OrderItem: order?.OrderItem.map((item) => ({
+        OrderItem: order.OrderItem.map((item) => ({
           ...item,
           productName: products[item.productId].name,
         })),
@@ -167,5 +137,22 @@ export class OrdersService {
       where: { id },
       data: { status },
     });
+  }
+
+  /**
+   * @throws {RpcError}
+   */
+  private findManyProducts(ids: number[]) {
+    return firstValueFrom(
+      this.productClient.send({ cmd: 'product.find_many' }, { ids }).pipe(
+        map(
+          (products: Product[]): ProductDict =>
+            products.reduce((acc, product) => {
+              acc[product.id] = product;
+              return acc;
+            }, {}),
+        ),
+      ),
+    );
   }
 }
