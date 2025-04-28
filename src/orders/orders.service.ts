@@ -8,14 +8,7 @@ import { PaginationAndFilterDto } from './dto/pagination-and-filter.dto';
 import { MICROSRV_PRODUCT } from '../config/microservices.token';
 import { firstValueFrom, map } from 'rxjs';
 import { RpcError } from '../common/exceptions/rpc-error';
-
-type Products = {
-  [id: number]: {
-    id: number;
-    price: number;
-    name: string;
-  };
-};
+import { Product, ProductDict } from './types/product.type';
 
 @Injectable()
 export class OrdersService {
@@ -26,7 +19,7 @@ export class OrdersService {
 
   async create(createOrderDto: CreateOrderDto) {
     try {
-      const products = await firstValueFrom<Products>(
+      const products = await firstValueFrom(
         this.productClient
           .send(
             { cmd: 'product.find_many' },
@@ -35,11 +28,12 @@ export class OrdersService {
             },
           )
           .pipe(
-            map((products: Products[keyof Products][]) =>
-              products.reduce((acc, product) => {
-                acc[product.id] = product;
-                return acc;
-              }, {}),
+            map(
+              (products: Product[]): ProductDict =>
+                products.reduce((acc, product) => {
+                  acc[product.id] = product;
+                  return acc;
+                }, {}),
             ),
           ),
       );
@@ -130,7 +124,7 @@ export class OrdersService {
     }
 
     try {
-      const products = await firstValueFrom<Products>(
+      const products = await firstValueFrom(
         this.productClient
           .send(
             { cmd: 'product.find_many' },
@@ -139,11 +133,12 @@ export class OrdersService {
             },
           )
           .pipe(
-            map((products: Products[keyof Products][]) =>
-              products.reduce((acc, product) => {
-                acc[product.id] = product;
-                return acc;
-              }, {}),
+            map(
+              (products: Product[]): ProductDict =>
+                products.reduce((acc, product) => {
+                  acc[product.id] = product;
+                  return acc;
+                }, {}),
             ),
           ),
       );
