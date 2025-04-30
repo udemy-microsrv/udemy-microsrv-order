@@ -1,18 +1,72 @@
-import { HttpStatus, Injectable } from '@nestjs/common';
+import { HttpStatus, Inject, Injectable } from '@nestjs/common';
+import { ClientProxy, RpcException } from '@nestjs/microservices';
 import { CreateOrderDto } from './dto/create-order.dto';
 import { ChangeOrderStatusDto } from './dto/change-order-status.dto';
 import { PrismaService } from '../prisma.service';
-import { throwRpcException } from '../common/exceptions/throw-rpc-exception';
+import { createRpcException } from '../common/exceptions/create-rpc-exception';
 import { PaginationAndFilterDto } from './dto/pagination-and-filter.dto';
+import { MICROSRV_PRODUCT } from '../config/microservices.token';
+import { firstValueFrom, map } from 'rxjs';
+import { RpcError } from '../common/exceptions/rpc-error';
+import { Product, ProductDict } from './types/product.type';
 
 @Injectable()
 export class OrdersService {
-  constructor(private prismaService: PrismaService) {}
+  constructor(
+    private prismaService: PrismaService,
+    @Inject(MICROSRV_PRODUCT) private productClient: ClientProxy,
+  ) {}
 
-  create(createOrderDto: CreateOrderDto) {
-    return this.prismaService.order.create({
-      data: createOrderDto,
-    });
+  async create(createOrderDto: CreateOrderDto) {
+    try {
+      const products = await this.findManyProducts(
+        createOrderDto.items.map((item) => item.productId),
+      );
+
+      const totalItems = createOrderDto.items.reduce(
+        (acc, item) => acc + item.quantity,
+        0,
+      );
+
+      const totalAmount = createOrderDto.items.reduce(
+        (acc, item) => acc + products[item.productId].price * item.quantity,
+        0,
+      );
+
+      const order = await this.prismaService.order.create({
+        data: {
+          totalItems,
+          totalAmount,
+          OrderItem: {
+            createMany: {
+              data: createOrderDto.items.map((item) => ({
+                ...item,
+                price: products[item.productId].price,
+              })),
+            },
+          },
+        },
+        include: {
+          OrderItem: {
+            select: {
+              price: true,
+              quantity: true,
+              productId: true,
+            },
+          },
+        },
+      });
+
+      return {
+        ...order,
+        OrderItem: order.OrderItem.map((item) => ({
+          ...item,
+          productName: products[item.productId].name,
+        })),
+      };
+    } catch (err) {
+      throw new RpcException(err as RpcError);
+    }
   }
 
   async findAll(paginationAndFilterDto: PaginationAndFilterDto) {
@@ -39,13 +93,36 @@ export class OrdersService {
   async findOne(id: string) {
     const order = await this.prismaService.order.findUnique({
       where: { id },
+      include: {
+        OrderItem: {
+          select: {
+            price: true,
+            quantity: true,
+            productId: true,
+          },
+        },
+      },
     });
 
     if (!order) {
-      throwRpcException(HttpStatus.NOT_FOUND, 'Order not found.');
+      throw createRpcException(HttpStatus.NOT_FOUND, 'Order not found.');
     }
 
-    return order;
+    try {
+      const products = await this.findManyProducts(
+        order.OrderItem.map((item) => item.productId),
+      );
+
+      return {
+        ...order,
+        OrderItem: order.OrderItem.map((item) => ({
+          ...item,
+          productName: products[item.productId].name,
+        })),
+      };
+    } catch (err) {
+      throw new RpcException(err as RpcError);
+    }
   }
 
   async changeStatus(changeOrderStatusDto: ChangeOrderStatusDto) {
@@ -60,5 +137,22 @@ export class OrdersService {
       where: { id },
       data: { status },
     });
+  }
+
+  /**
+   * @throws {RpcError}
+   */
+  private findManyProducts(ids: number[]) {
+    return firstValueFrom(
+      this.productClient.send({ cmd: 'product.find_many' }, { ids }).pipe(
+        map(
+          (products: Product[]): ProductDict =>
+            products.reduce((acc, product) => {
+              acc[product.id] = product;
+              return acc;
+            }, {}),
+        ),
+      ),
+    );
   }
 }

@@ -1,0 +1,1 @@
+export const MICROSRV_PRODUCT = 'MICROSRV_PRODUCT';

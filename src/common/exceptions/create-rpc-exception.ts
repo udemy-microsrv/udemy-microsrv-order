@@ -1,7 +1,10 @@
 import { RpcException } from '@nestjs/microservices';
 import { RpcError } from './rpc-error';
 
-export const throwRpcException = (status: number, message: string): void => {
+export const createRpcException = (
+  status: number,
+  message: string,
+): RpcException => {
   const error: RpcError = { status, message };
-  throw new RpcException(error);
+  return new RpcException(error);
 };
