@@ -5,7 +5,7 @@ import { ChangeOrderStatusDto } from './dto/change-order-status.dto';
 import { PrismaService } from '../prisma.service';
 import { createRpcException } from '../common/exceptions/create-rpc-exception';
 import { PaginationAndFilterDto } from './dto/pagination-and-filter.dto';
-import { MICROSRV_PRODUCT } from '../config/microservices.token';
+import { NATS_SERVICE } from '../config/microservices.token';
 import { firstValueFrom, map } from 'rxjs';
 import { RpcError } from '../common/exceptions/rpc-error';
 import { Product, ProductDict } from './types/product.type';
@@ -14,7 +14,7 @@ import { Product, ProductDict } from './types/product.type';
 export class OrdersService {
   constructor(
     private prismaService: PrismaService,
-    @Inject(MICROSRV_PRODUCT) private productClient: ClientProxy,
+    @Inject(NATS_SERVICE) private clientProxy: ClientProxy,
   ) {}
 
   async create(createOrderDto: CreateOrderDto) {
@@ -144,7 +144,7 @@ export class OrdersService {
    */
   private findManyProducts(ids: number[]) {
     return firstValueFrom(
-      this.productClient.send({ cmd: 'product.find_many' }, { ids }).pipe(
+      this.clientProxy.send('products.find_many', { ids }).pipe(
         map(
           (products: Product[]): ProductDict =>
             products.reduce((acc, product) => {

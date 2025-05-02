@@ -1,1 +1,1 @@
-export const MICROSRV_PRODUCT = 'MICROSRV_PRODUCT';
+export const NATS_SERVICE = 'NATS_SERVICE';

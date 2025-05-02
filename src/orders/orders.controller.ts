@@ -9,22 +9,22 @@ import { PaginationAndFilterDto } from './dto/pagination-and-filter.dto';
 export class OrdersController {
   constructor(private readonly ordersService: OrdersService) {}
 
-  @MessagePattern('order.create')
+  @MessagePattern('orders.create')
   create(@Payload() createOrderDto: CreateOrderDto) {
     return this.ordersService.create(createOrderDto);
   }
 
-  @MessagePattern('order.find_all')
+  @MessagePattern('orders.find_all')
   findAll(@Payload() paginationAndFilterDto: PaginationAndFilterDto) {
     return this.ordersService.findAll(paginationAndFilterDto);
   }
 
-  @MessagePattern('order.find_one')
+  @MessagePattern('orders.find_one')
   findOne(@Payload('id', ParseUUIDPipe) id: string) {
     return this.ordersService.findOne(id);
   }
 
-  @MessagePattern('order.change_status')
+  @MessagePattern('orders.change_status')
   changeStatus(@Payload() changeOrderStatusDto: ChangeOrderStatusDto) {
     return this.ordersService.changeStatus(changeOrderStatusDto);
   }

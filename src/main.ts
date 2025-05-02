@@ -9,9 +9,9 @@ async function bootstrap() {
     AppModule,
     {
       useFactory: (configService: ConfigService) => ({
-        transport: Transport.TCP,
+        transport: Transport.NATS,
         options: {
-          port: configService.get('app.port'),
+          servers: configService.get('transport.nats.servers'),
         },
       }),
       inject: [ConfigService],
@@ -28,9 +28,7 @@ async function bootstrap() {
   await app.listen();
 
   const logger = new Logger('bootstrap');
-  logger.log(
-    `Microservice is listening on port ${app.get(ConfigService).get('app.port')}`,
-  );
+  logger.log('Microservice (microsrv-order) is up and running');
 }
 
 bootstrap();
