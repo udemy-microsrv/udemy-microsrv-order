@@ -1,6 +1,6 @@
 {
   "name": "udemy-microsrv-order",
-  "version": "2.0.0",
+  "version": "3.0.0",
   "description": "Microservice for managing orders",
   "author": "Sebastian Torres Cabrera <sebastian.torres0426@gmail.com> (https://github.com/sebasbit)",
   "private": true,
