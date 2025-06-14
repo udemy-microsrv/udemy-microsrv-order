@@ -9,6 +9,8 @@ import { NATS_SERVICE } from '../config/microservices.token';
 import { firstValueFrom, map } from 'rxjs';
 import { RpcError } from '../common/exceptions/rpc-error';
 import { Product, ProductDict } from './types/product.type';
+import { Order } from './entities/order.entity';
+import { PaymentSession } from './types/payment-session.type';
 
 @Injectable()
 export class OrdersService {
@@ -153,6 +155,20 @@ export class OrdersService {
             }, {}),
         ),
       ),
+    );
+  }
+
+  async createPaymentSession(order: Order): Promise<PaymentSession> {
+    return await firstValueFrom(
+      this.clientProxy.send('payments.create_session', {
+        orderId: order.id,
+        currency: 'usd',
+        items: order.OrderItem.map((item) => ({
+          name: item.productName,
+          price: item.price,
+          quantity: item.quantity,
+        })),
+      }),
     );
   }
 }
