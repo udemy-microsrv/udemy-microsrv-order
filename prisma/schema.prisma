@@ -23,6 +23,7 @@ model Order {
   createdAt   DateTime    @default(now())
   updatedAt   DateTime    @updatedAt
   OrderItem   OrderItem[]
+  OrderPayment OrderPayment?
 }
 
 model OrderItem {
@@ -32,4 +33,14 @@ model OrderItem {
   price     Float
   Order     Order?  @relation(fields: [orderId], references: [id])
   orderId   String?
+}
+
+model OrderPayment {
+  id String  @id @default(uuid())
+  orderId String @unique
+  externalId String @unique
+  receiptUrl String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  Order Order @relation(fields: [orderId], references: [id])
 }
