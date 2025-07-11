@@ -9,6 +9,9 @@ import { NATS_SERVICE } from '../config/microservices.token';
 import { firstValueFrom, map } from 'rxjs';
 import { RpcError } from '../common/exceptions/rpc-error';
 import { Product, ProductDict } from './types/product.type';
+import { Order } from './entities/order.entity';
+import { PaymentSession } from './types/payment-session.type';
+import { PaidOrderDto } from './dto/paid-order.dto';
 
 @Injectable()
 export class OrdersService {
@@ -154,5 +157,36 @@ export class OrdersService {
         ),
       ),
     );
+  }
+
+  async createPaymentSession(order: Order): Promise<PaymentSession> {
+    return await firstValueFrom(
+      this.clientProxy.send('payments.create_session', {
+        orderId: order.id,
+        currency: 'usd',
+        items: order.OrderItem.map((item) => ({
+          name: item.productName,
+          price: item.price,
+          quantity: item.quantity,
+        })),
+      }),
+    );
+  }
+
+  async markAsPaid(paidOrderDto: PaidOrderDto) {
+    await this.prismaService.order.update({
+      where: { id: paidOrderDto.orderId },
+      data: {
+        status: 'PAID',
+        isPaid: true,
+        paidAt: new Date(),
+        OrderPayment: {
+          create: {
+            externalId: paidOrderDto.externalId,
+            receiptUrl: paidOrderDto.receiptUrl,
+          },
+        },
+      },
+    });
   }
 }
