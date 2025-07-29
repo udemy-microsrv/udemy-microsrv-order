@@ -10,7 +10,7 @@ env:
   PROJECT_ID: 'udemy-microsrv'
   AR_REGION: 'us-central1'
   AR_REPOSITORY: 'docker-images'
-  IMAGE_NAME: 'udemy-microsrv-payment'
+  IMAGE_NAME: 'udemy-microsrv-order'
 
 jobs:
   build-and-push:
