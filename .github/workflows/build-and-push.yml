@@ -33,7 +33,12 @@ jobs:
         run: gcloud auth configure-docker ${{ env.AR_REGION }}-docker.pkg.dev
 
       - name: Build Docker Image
-        run: docker build -t ${{ env.AR_REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.AR_REPOSITORY }}/${{ env.IMAGE_NAME }}:latest .
+        run: |
+          docker build \
+            -t ${{ env.AR_REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.AR_REPOSITORY }}/${{ env.IMAGE_NAME }}:latest \
+            --file=Dockerfile.prod \
+            --platform=linux/amd64 \
+            .
 
       - name: Push Docker Image to Artifact Registry
         run: docker push ${{ env.AR_REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.AR_REPOSITORY }}/${{ env.IMAGE_NAME }}:latest
