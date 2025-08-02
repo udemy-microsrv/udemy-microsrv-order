@@ -4,7 +4,6 @@ on:
   push:
     branches:
       - main
-      - add-workflow-to-build-and-publish-docker-image
 
 env:
   PROJECT_ID: 'udemy-microsrv'
